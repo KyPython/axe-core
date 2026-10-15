@@ -1,0 +1,37 @@
+{
+  "unit": {
+    "tests": 26,
+    "failures": [
+      {
+        "title": "utils.getFrameContexts > modal dialogs > skips frames blocked by showModal()",
+        "message": "expected 1 to equal +0"
+      },
+      {
+        "title": "utils.getFrameContexts > modal dialogs > includes only the topmost modal frames regardless of DOM order",
+        "message": "expected 2 to equal 1"
+      },
+      {
+        "title": "utils.getFrameContexts > modal dialogs > skips frames blocked by a modal dialog in a shadow root",
+        "message": "expected 1 to equal +0"
+      }
+    ]
+  },
+  "integration": {
+    "url": "test/integration/full/frame-focusable-content/modal.html",
+    "tests": 9,
+    "failures": [
+      {
+        "title": "frame-focusable-content modal dialogs > makes frames blocked by showModal() inapplicable",
+        "message": "violations: expected [ [ '#background-frame', '#frame-content' ], [ '#sibling-frame', '#frame-content' ] ] to deeply equal []"
+      },
+      {
+        "title": "frame-focusable-content modal dialogs > uses the topmost modal when activation order differs from DOM order",
+        "message": "violations: expected [ [ '#background-frame', '#frame-content' ], [ '#sibling-frame', '#frame-content' ], [ '#first-modal-frame', '#frame-content' ], [ '#second-modal-frame', '#frame-content' ] ] to deeply equal [ [ '#first-modal-frame', '#frame-content' ] ]"
+      },
+      {
+        "title": "frame-focusable-content modal dialogs > makes frames blocked by a shadow-root modal inapplicable",
+        "message": "violations: expected [ [ '#background-frame', '#frame-content' ], [ '#sibling-frame', '#frame-content' ] ] to deeply equal []"
+      }
+    ]
+  }
+}

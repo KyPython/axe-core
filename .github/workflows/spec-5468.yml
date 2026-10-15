@@ -1,0 +1,46 @@
+name: Validate issue 5468 specification
+
+on: workflow_dispatch
+
+permissions:
+  contents: read
+
+jobs:
+  specification:
+    if: github.repository == 'KyPython/axe-core'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require unchanged implementation
+        env:
+          BASELINE_SHA: f01bf5ce56ffcf1411d14d14ed75d1fb86f8023c
+        run: git diff --exit-code "$BASELINE_SHA" HEAD -- lib axe.d.ts package.json pnpm-lock.yaml build .github/actions
+      - name: Install dependencies
+        id: dependencies
+        uses: ./.github/actions/install-deps
+      - run: pnpm run fmt:check
+      - run: pnpm run eslint
+      - run: pnpm run test:tsc
+      - run: pnpm run build
+      - name: Validate exact regressions and passing controls
+        env:
+          WTR_BROWSER: ${{ matrix.browser }}
+          CHROME_BIN: ${{ steps.dependencies.outputs.chrome-path }}
+          CHROMEDRIVER_BIN: ${{ steps.dependencies.outputs.chromedriver-path }}
+          FIREFOX_BIN: ${{ steps.dependencies.outputs.firefox-path }}
+        run: pnpm exec start-server-and-test start http://localhost:9876 "node .github/bin/validate-5468-spec.mjs"
+      - name: Retain structured evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: specification-${{ matrix.browser }}
+          path: tmp/spec-5468-*.json
+          if-no-files-found: ignore
