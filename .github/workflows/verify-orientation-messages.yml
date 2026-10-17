@@ -1,5 +1,5 @@
 name: Verify orientation check messages
-run-name: Orientation baseline f01bf5ce56ffcf1411d14d14ed75d1fb86f8023c
+run-name: Orientation candidate 5650eff75b78b2d6a5692bccdf5922d9f66fc7d4
 
 # Fork runner only. All tested source comes from the separate immutable SHA.
 on:
@@ -16,15 +16,15 @@ concurrency:
 
 env:
   CHROME_DEVEL_SANDBOX: /opt/google/chrome/chrome-sandbox
-  SOURCE_SHA: f01bf5ce56ffcf1411d14d14ed75d1fb86f8023c
-  ORIENTATION_PHASE: baseline
+  SOURCE_SHA: 5650eff75b78b2d6a5692bccdf5922d9f66fc7d4
+  ORIENTATION_PHASE: candidate
   ORIENTATION_CONTRACT_SHA256: a8eb4c4b5632c7c28f4fc8c092aaee00b3bab24ffc074f2e33c6b0fd904bea5f
   ORIENTATION_RUNNER_SHA: ${{ github.sha }}
 
 jobs:
   lint:
     needs: specification
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -53,7 +53,7 @@ jobs:
 
   fmt_check:
     needs: specification
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -65,7 +65,7 @@ jobs:
 
   build:
     needs: specification
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -84,7 +84,7 @@ jobs:
 
   test_chrome:
     needs: specification
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
@@ -112,7 +112,7 @@ jobs:
 
   test_firefox:
     needs: specification
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
@@ -134,7 +134,7 @@ jobs:
   # Run examples under `doc/examples`
   test_examples:
     needs: specification
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     # Temporarily non-blocking due to an upstream issue with the examples.
@@ -154,7 +154,7 @@ jobs:
         run: pnpm run test:examples
 
   test_act:
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: [specification, build]
@@ -173,7 +173,7 @@ jobs:
         run: pnpm run test:act
 
   test_aria_practices:
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: [specification, build]
@@ -188,7 +188,7 @@ jobs:
         run: pnpm run test:apg
 
   test_locales:
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: [specification, build]
@@ -200,7 +200,7 @@ jobs:
         run: pnpm run test:locales
 
   test_virtual_rules:
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: [specification, build]
@@ -212,7 +212,7 @@ jobs:
         run: pnpm run test:virtual-rules
 
   test_jsdom:
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: [specification, build]
@@ -225,7 +225,7 @@ jobs:
 
   build_api_docs:
     needs: specification
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -235,7 +235,7 @@ jobs:
         run: pnpm run api-docs
 
   test_node:
-    if: github.repository == 'KyPython/axe-core' && false
+    if: github.repository == 'KyPython/axe-core' && true
     # The package can't be built on Node 6 anymore, but should still run there.
     # So we need to pull in a previous build artifact.
     needs: [specification, build]
