@@ -1,0 +1,305 @@
+name: Verify orientation check messages
+run-name: Orientation baseline f01bf5ce56ffcf1411d14d14ed75d1fb86f8023c
+
+# Fork runner only. All tested source comes from the separate immutable SHA.
+on:
+  push:
+    branches:
+      - ci/css-orientation-lock-20261017-p29dcy88
+
+permissions:
+  contents: read
+
+concurrency:
+  group: orientation-${{ github.sha }}
+  cancel-in-progress: false
+
+env:
+  CHROME_DEVEL_SANDBOX: /opt/google/chrome/chrome-sandbox
+  SOURCE_SHA: f01bf5ce56ffcf1411d14d14ed75d1fb86f8023c
+  ORIENTATION_PHASE: baseline
+  ORIENTATION_CONTRACT_SHA256: a8eb4c4b5632c7c28f4fc8c092aaee00b3bab24ffc074f2e33c6b0fd904bea5f
+  ORIENTATION_RUNNER_SHA: ${{ github.sha }}
+
+jobs:
+  lint:
+    needs: specification
+    if: github.repository == 'KyPython/axe-core' && false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - &checkout
+        name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      # Must precede setup-node so its `cache: pnpm` can resolve the store path.
+      - &setup-pnpm
+        name: Set up pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+      - &setup-node
+        name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: 'pnpm'
+      - &install-deps-directly
+        name: Install Dependencies
+        run: pnpm ci
+      - name: Run ESLint
+        run: pnpm run eslint
+
+  fmt_check:
+    needs: specification
+    if: github.repository == 'KyPython/axe-core' && false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - *checkout
+      - *setup-pnpm
+      - *setup-node
+      - *install-deps-directly
+      - run: pnpm run fmt:check
+
+  build:
+    needs: specification
+    if: github.repository == 'KyPython/axe-core' && false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - *checkout
+      - *setup-pnpm
+      - *setup-node
+      - *install-deps-directly
+      - &build
+        name: Build
+        run: pnpm run build
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: axe-core
+          path: axe.js
+          retention-days: 1
+
+  test_chrome:
+    needs: specification
+    if: github.repository == 'KyPython/axe-core' && false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      DISPLAY: :99
+    steps:
+      - *checkout
+      - &install-deps-with-xvfb
+        name: Install Deps
+        uses: ./.github/actions/install-deps
+        id: install-deps
+        with:
+          start-xvfb: ${{ env.DISPLAY }}
+      - *build
+      - name: Run Tests Against Chrome
+        env:
+          WTR_BROWSER: chrome
+          CHROME_BIN: ${{ steps.install-deps.outputs.chrome-path }}
+          CHROMEDRIVER_BIN: ${{ steps.install-deps.outputs.chromedriver-path }}
+        run: pnpm run test
+      - name: Run Chrome Integration Tests
+        env:
+          CHROME_BIN: ${{ steps.install-deps.outputs.chrome-path }}
+          CHROMEDRIVER_BIN: ${{ steps.install-deps.outputs.chromedriver-path }}
+        run: pnpm run test:integration:chrome
+
+  test_firefox:
+    needs: specification
+    if: github.repository == 'KyPython/axe-core' && false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      DISPLAY: :99
+    steps:
+      - *checkout
+      - *install-deps-with-xvfb
+      - *build
+      - name: Run Tests Against Firefox
+        env:
+          WTR_BROWSER: firefox
+          FIREFOX_BIN: ${{ steps.install-deps.outputs.firefox-path }}
+        run: pnpm run test
+      - name: Run Firefox Integration Tests
+        env:
+          FIREFOX_BIN: ${{ steps.install-deps.outputs.firefox-path }}
+        run: pnpm run test:integration:firefox
+
+  # Run examples under `doc/examples`
+  test_examples:
+    needs: specification
+    if: github.repository == 'KyPython/axe-core' && false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # Temporarily non-blocking due to an upstream issue with the examples.
+    # A failure here will not fail the Tests workflow, so it won't block deploys.
+    # Remove this once the upstream issue is resolved.
+    continue-on-error: true
+    steps:
+      - *checkout
+      - &install-deps
+        name: Install Deps
+        id: install-deps
+        uses: ./.github/actions/install-deps
+      - *build
+      - name: Run Tests Against Examples
+        env:
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.install-deps.outputs.chrome-path }}
+        run: pnpm run test:examples
+
+  test_act:
+    if: github.repository == 'KyPython/axe-core' && false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [specification, build]
+    steps:
+      - *checkout
+      - *install-deps
+      - &restore-axe-build
+        name: Restore axe build
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: axe-core
+      - name: Run ACT Tests
+        env:
+          CHROME_BIN: ${{ steps.install-deps.outputs.chrome-path }}
+          CHROMEDRIVER_BIN: ${{ steps.install-deps.outputs.chromedriver-path }}
+        run: pnpm run test:act
+
+  test_aria_practices:
+    if: github.repository == 'KyPython/axe-core' && false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [specification, build]
+    steps:
+      - *checkout
+      - *install-deps
+      - *restore-axe-build
+      - name: Run ARIA Practices Tests
+        env:
+          CHROME_BIN: ${{ steps.install-deps.outputs.chrome-path }}
+          CHROMEDRIVER_BIN: ${{ steps.install-deps.outputs.chromedriver-path }}
+        run: pnpm run test:apg
+
+  test_locales:
+    if: github.repository == 'KyPython/axe-core' && false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [specification, build]
+    steps:
+      - *checkout
+      - *install-deps
+      - *restore-axe-build
+      - name: Run Locale Tests
+        run: pnpm run test:locales
+
+  test_virtual_rules:
+    if: github.repository == 'KyPython/axe-core' && false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [specification, build]
+    steps:
+      - *checkout
+      - *install-deps
+      - *restore-axe-build
+      - name: Run Virtual Rules Tests
+        run: pnpm run test:virtual-rules
+
+  test_jsdom:
+    if: github.repository == 'KyPython/axe-core' && false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [specification, build]
+    steps:
+      - *checkout
+      - *install-deps
+      - *restore-axe-build
+      - name: Run jsdom Tests
+        run: pnpm run test:jsdom
+
+  build_api_docs:
+    needs: specification
+    if: github.repository == 'KyPython/axe-core' && false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - *checkout
+      - *install-deps
+      - name: Run API Docs Build
+        run: pnpm run api-docs
+
+  test_node:
+    if: github.repository == 'KyPython/axe-core' && false
+    # The package can't be built on Node 6 anymore, but should still run there.
+    # So we need to pull in a previous build artifact.
+    needs: [specification, build]
+    strategy:
+      matrix:
+        node:
+          - 6
+          - 18
+          - 20
+          - 22
+          - 24
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - *checkout
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+      - *restore-axe-build
+      # Invoked directly rather than through pnpm: this matrix covers Node
+      # versions far older than pnpm itself can run on.
+      - name: Run Node.js Tests
+        run: node test/node/node.js
+
+  specification:
+    if: github.repository == 'KyPython/axe-core'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
+    steps:
+      - name: Checkout fork runner
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          ref: ${{ github.sha }}
+          path: runner
+          persist-credentials: false
+      - name: Preserve technical acceptance files outside source checkout
+        run: |
+          mkdir -p "$RUNNER_TEMP/orientation-ci"
+          cp runner/.github/bin/orientation-acceptance.json "$RUNNER_TEMP/orientation-ci/"
+          cp runner/.github/bin/validate-orientation-spec.mjs "$RUNNER_TEMP/orientation-ci/"
+          cp runner/.github/bin/orientation-wtr.config.mjs "$RUNNER_TEMP/orientation-ci/"
+      - *checkout
+      - name: Confirm exact source checkout
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - name: Install source dependencies and matched browsers
+        id: specification-deps
+        uses: ./.github/actions/install-deps
+      - *build
+      - name: Validate acceptance and observe omission controls
+        env:
+          WTR_BROWSER: ${{ matrix.browser }}
+          CHROME_BIN: ${{ steps.specification-deps.outputs.chrome-path }}
+          CHROMEDRIVER_BIN: ${{ steps.specification-deps.outputs.chromedriver-path }}
+          FIREFOX_BIN: ${{ steps.specification-deps.outputs.firefox-path }}
+        run: node "$RUNNER_TEMP/orientation-ci/validate-orientation-spec.mjs"
+      - name: Retain structured specification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: orientation-specification-${{ env.ORIENTATION_PHASE }}-${{ matrix.browser }}
+          path: ${{ runner.temp }}/orientation-ci/evidence/
+          if-no-files-found: warn

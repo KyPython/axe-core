@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "base": "f01bf5ce56ffcf1411d14d14ed75d1fb86f8023c",
+  "target": "test/checks/mobile/css-orientation-lock.js",
+  "checkId": "css-orientation-lock",
+  "metadata": "lib/checks/mobile/css-orientation-lock.json",
+  "helper": "axe.testUtils.getCheckEvaluate",
+  "verifyMessage": true,
+  "preservation": "Preserve all existing test statements and arguments except the evaluator helper migration and formatting.",
+  "testCount": 22,
+  "omission": {
+    "message": "incomplete",
+    "baselineFailures": 0,
+    "candidateFailures": [
+      "css-orientation-lock tests > returns undefined when CSSOM is undefined",
+      "css-orientation-lock tests > returns undefined when CSSOM is empty"
+    ],
+    "errorPrefix": "Missing \"incomplete\" message for check result of undefined"
+  }
+}
