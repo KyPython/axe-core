@@ -1,17 +1,20 @@
 # axe-core — Claude Code Context
 
 <!-- AI-GOVERNANCE:v1 | canonical source: KyPython/ai-governance/AGENTS.governance.md | do not weaken locally; change it upstream via a PR Ky approves -->
+
 ## AI Governance (mandatory for every AI agent)
 
 Applies to every AI coding agent working in this repo: Kiro, Codex, Cursor, Grok Bot, Claude Code, Copilot, and any sub-agent they spawn. Sub-agents inherit these rules and may not weaken, relabel, bypass, or self-attest them. Repo-specific rules below this section may tighten these rules but never loosen them. Derived from `KyLamportLogic/LamportLogic` (AGENTS.md, CODEOWNERS, PR template, `.husky/`, `.claude/`, CI and secret-scan workflows).
 
 **Merge and deploy gate.** Nothing reaches `main` or production unless both of these are true:
+
 1. The required checks are green: the repo's own CI plus `ai-governance / verdict`. The verdict runs install plus whichever of lint, type-check, test, and build the repo defines as scripts, then policy checks (including the spec gate) and a gitleaks secret scan, all through the reusable workflow in `KyPython/ai-governance`.
 2. Ky (@KyPython) merges the PR. Checks are the gate; only Ky merges.
 
 Agents never merge, approve, or deploy their own work.
 
 ### Rules
+
 1. **Branch + PR only.** Never push to `main`. Work on a branch such as `feat/*`, `fix/*`, `chore/*`, `docs/*`, `ci/*`, `refactor/*`, or `governance/*`, then open a PR. Do not merge it, approve it, enable auto-merge, or trigger a deploy. Ky merges.
 2. **Fixed roles. Spec first: no spec, no code.** Every agent has one role, defined in `KyPython/ai-governance/roles.yml`. Ky owns that file, and the gate reads it in every repo.
    - **Spec author: Kiro (`kiro-agent[bot]`) only**, with Ky as owner override. Kiro writes specs and requirements in **spec-only PRs**, which Ky reviews and merges before any code is built from them.
@@ -47,12 +50,12 @@ Agents never merge, approve, or deploy their own work.
    - branch protection or rulesets
 
    A change to any of them needs Ky's explicit request, and Ky merges it. Never edit a gate to make it pass.
+
 8. **Secrets.** Never commit secrets, tokens, or `.env` values, and never print credentials. If a secret leaks: rotate it at the provider first, then rewrite it out of branch history. Deleting it in a later commit is not enough.
 9. **No destructive commands without explicit human authorization.** This covers `git push --force`, `git reset --hard`, `git clean -fd`, `prisma migrate reset`, `supabase db reset`, `drop database`, `terraform destroy`, and `rm -rf /`.
 10. **Supply chain.** Pin third-party GitHub Actions to a full commit SHA. Every workflow declares a least-privilege `permissions:` block. Untrusted event data (PR title, body, branch name) goes through `env:` and is never spliced into `run:` scripts.
 11. **Human judgment stays human.** Do not invent users, traction, metrics, or personal facts. Stop and hand formative, consequential (irreversible), and authorship decisions to Ky.
 12. **Deploys follow governance.** Only Ky deploys, from main, after the repo’s required CI and governance verdict succeed for the exact deployed revision. Automated jobs use a successful workflow_run from a same-repository main push. An existing manual-only deployment remains manual-only and must enforce the same source/check conditions plus its protected human environment; agents never invoke it. Do not add an automatic deploy to a manual project or treat a check from another revision as approval.
-
 
 **Last updated:** 2026-03-19
 
