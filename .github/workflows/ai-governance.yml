@@ -25,7 +25,7 @@ jobs:
   ai-governance:
     uses: KyPython/ai-governance/.github/workflows/governance.yml@bacf04c5dc635305b8424214cbbf1522ee99fba1 # main
     with:
-      node-version: "22"
+      node-version: "24"
       # require-tests: true
       # extra-command: "pnpm validate:all"
       # require-issue-reference: false
